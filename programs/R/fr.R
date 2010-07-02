@@ -45,13 +45,21 @@ bHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
     b
   }
 
-varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE)
+varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
+                    shrink=TRUE)
   {
     # estimate yhat
     yhat <- yHat(y,z,phi,addPhiIntercept=addPhiIntercept,
                  addZIntercept=addZIntercept)
     # estimate within sample variance matrix, sigma
-    sigma <- var(y-yhat)
+    if(shrink)
+      {
+        sigma <- cov.shrink(y-yhat,verb=FALSE)
+      }
+    else
+      {
+        sigma <- var(y-yhat)
+      }
     # project sigma on phi
     pp <- bHat(sigma,phi,phi,addZIntercept=addPhiIntercept,
                addPhiIntercept=addPhiIntercept)
@@ -72,7 +80,7 @@ varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE)
   }
 
 quadForm <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
-                     notIntercept=TRUE,weightPhi=NULL)
+                     notIntercept=TRUE,weightPhi=NULL,shrink=TRUE)
   {
     # estimate yhat
     yhat <- yHat(y,z,phi,addPhiIntercept=addPhiIntercept,
@@ -80,7 +88,15 @@ quadForm <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
     # estimate within sample variance matrix, sigma
     # sigma <- var(y-yhat)
     # sigma <- cov.shrink(y,verb=FALSE)
-    sigma <- cov.shrink(y-yhat,verb=FALSE)    
+    if(shrink)
+      {
+        sigma <- cov.shrink(y-yhat,verb=FALSE)
+      }
+    else
+      {
+        sigma <- var(y-yhat)
+      }
+    
     # sigma <- var(y)
     # calculate bhat
     b <- bHat(y,z,phi,addPhiIntercept=addPhiIntercept,
@@ -206,10 +222,12 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
 ##     out
 ##   }
 
- funcScanone <- function(y,cr,phi,method="hk",crit="qf",weightPhi=NULL)
+ funcScanone <- function(y,cr,phi,method="hk",crit="qf",weightPhi=NULL,
+                         shrink=TRUE)
   {
     if(method=="hk")
-      out <- funcScanone.hk(y,cr,phi,crit=crit,weightPhi=weightPhi)
+      out <- funcScanone.hk(y,cr,phi,crit=crit,weightPhi=weightPhi,
+                            shrink=shrink)
     else
       if(method=="imp")
         out <- funcScanone.imp(y,cr,phi,crit=crit,weightPhi=weightPhi)
@@ -218,7 +236,8 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
     out
   }
 
- funcScanone.hk <- function(y,cr,phi,crit="qf",weightPhi=NULL)
+ funcScanone.hk <- function(y,cr,phi,crit="qf",weightPhi=NULL,
+                            shrink=TRUE)
    {
      if(!match("prob",names(cr$geno[[1]])))
        {
@@ -246,7 +265,8 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
        {
          for( j in 1:nr )
            {
-             qq <- quadForm(y,gg[,j,-1],phi,weightPhi=weightPhi)
+             qq <- quadForm(y,gg[,j,-1],phi,weightPhi=weightPhi,
+                            shrink=shrink)
              out[j,3] <- qq$quadform/2/log(10)
            }
        }
@@ -276,8 +296,8 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
      npseudo <- 0
      for( i in 1:length(cr$geno) )
        {
-         # all the genotype probabilities on the i-th chromosome
-         gg <- cr$geno[[i]]$prob[,,-1]
+         # all the imputations on the i-th chromosome
+         gg <- cr$geno[[i]]$draws
          npseudoChr <- dim(gg)[2]
          for( j in 1:npseudoChr )
            {
@@ -291,7 +311,7 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
 
 
 funcScanonePerm <- function(y,geno,phi,nperm,method="hk",crit="qf",
-                            weightPhi=NULL)
+                            weightPhi=NULL,shrink=TRUE)
   {
     # if genotype probabilities have not been calculated, calculate them
      if(!match("prob",names(cr$geno[[1]])))
@@ -340,7 +360,8 @@ funcScanonePerm <- function(y,geno,phi,nperm,method="hk",crit="qf",
            {
              for( j in 1:nr )
                {
-                 qq <- quadForm(y[permidx,],gg[,j,-1],phi,weightPhi=weightPhi)
+                 qq <- quadForm(y[permidx,],gg[,j,-1],phi,weightPhi=weightPhi,
+                                shrink=shrink)
                  out[j,2+k] <- qq$quadform/2/log(10)
            }
            }
