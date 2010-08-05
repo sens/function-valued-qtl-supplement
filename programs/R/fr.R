@@ -51,18 +51,6 @@ varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
     # estimate yhat
     yhat <- yHat(y,z,phi,addPhiIntercept=addPhiIntercept,
                  addZIntercept=addZIntercept)
-    # estimate within sample variance matrix, sigma
-    if(shrink)
-      {
-        sigma <- cov.shrink(y-yhat,verb=FALSE)
-      }
-    else
-      {
-        sigma <- var(y-yhat)
-      }
-    # project sigma on phi
-    pp <- bHat(sigma,phi,phi,addZIntercept=addPhiIntercept,
-               addPhiIntercept=addPhiIntercept)
 
     if(is.null(z))
       z <- rep(1,length=nrow(y))
@@ -73,6 +61,25 @@ varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
         else
           z <- model.matrix(~z-1)
       }
+
+    # degrees of freedom
+    zdf <- ncol(z)
+    # sample size
+    n <- nrow(y)
+    
+    # estimate within sample variance matrix, sigma
+    if(shrink)
+      {
+        sigma <- cov.shrink(y-yhat,verb=FALSE)
+      }
+    else
+      {
+        sigma <- var(y-yhat)*(n-1)/(n-df)
+      }
+    # project sigma on phi
+    pp <- bHat(sigma,phi,phi,addZIntercept=addPhiIntercept,
+               addPhiIntercept=addPhiIntercept)
+
     # calculate (z'z)^(-1)
     zzinv <- solve(t(z)%*%z)
     # take kron prod
