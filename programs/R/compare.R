@@ -4,7 +4,8 @@ source("fr.R")
 # 13 time points
 tt <- seq(0,6,by=0.5)
 # two groups of 100 each
-grp <- c(rep(0,100),rep(1,100))
+n <- 100
+grp <- c(rep(0,1000),rep(1,1000))
 
 # natural spline basis with 6+1 df
 psi6 <- ns(tt,df=6)
@@ -72,15 +73,15 @@ out21m <- compareSimMat(beta21,nsim,tt,psi6,grp,phi=1,kappa=2)
 # tests for the null distribution
 ksTest(out000)
 ksTest(out004)
-ksTest(sim00)
+ksTest(out00m)
 
 ksTest(out100)
 ksTest(out104)
-ksTest(sim10)
+ksTest(out10m)
 
 ksTest(out200)
 ksTest(out204)
-ksTest(sim20)
+ksTest(out20m)
 
 # power in the alternative case
 powerCalc(out000,out010)
