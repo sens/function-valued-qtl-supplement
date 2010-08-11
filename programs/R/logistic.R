@@ -1,10 +1,19 @@
+# library for the matern covariance function
 library(geoR)
 
+# creates covariance matrix from the covariance function
+# u=time points
+# phi=scale
+# kappa=smoothness
 maternCov <- function(u,phi,kappa)
   {
     toeplitz(matern(u,phi,kappa))
   }
 
+# simulates multivariate normal random vectors with matern covariance
+# function
+# n=sample size
+# u,phi,kappa same as maternCov
 rnormMatern <- function(n,u,phi,kappa)
   {
     ee <- rnorm(n*length(u))
@@ -13,6 +22,7 @@ rnormMatern <- function(n,u,phi,kappa)
     ee
   }
 
+# logistic growth curve as a function
 logisticFun <- function(beta,tt)
   {
     # a/(1+b*exp(-c*t))
@@ -243,7 +253,10 @@ logisticTest2 <- function(y,tt,grp,beta0=NULL,...)
                          beta0=apply(out1$betahat,2,mean),...)
  
     if((out0$convergence!=0)|(out1$convergence!=0))
-      stop("Did not converge.")
+      {
+        stop("Did not converge.")
+        # out <- list(beta0=NA,beta1=NA,loglik=NA)
+      }
     else
       {
         out <- list(beta0=out0$betahat,
@@ -266,12 +279,16 @@ compareSimAR <- function(beta,nsim,tt,psi,grp,df=0)
       {
         print(i)
         y <- logisticSim2(beta,tt,grp,df=df)
-        out1 <- logisticTest2(y,tt,grp,
-                              beta0=c(beta[1,1:3],beta[2,1:3],beta[1,4:5]))
+        out1 <- try(logisticTest2(y,tt,grp,
+                              beta0=c(beta[1,1:3],beta[2,1:3],
+                                beta[1,4:5])),TRUE)
         out2 <- quadForm(y,grp,psi,shrink=TRUE)
         out3 <- quadForm(y,grp,psi,shrink=FALSE)
 
-        pval[i,1] <- pchisq(2*out1$loglik,3,lower=FALSE)
+        if(length(grep("loglik",names(out1)))!=0)
+          pval[i,1] <- pchisq(2*out1$loglik,3,lower=FALSE)
+        else
+          pval[i,1] <- NA
         pval[i,2] <- pchisq(out2$quadform,psidf,lower=FALSE)
         pval[i,3] <- pchisq(out3$quadform,psidf,lower=FALSE)        
       }
@@ -290,12 +307,16 @@ compareSimMat <- function(beta,nsim,tt,psi,grp,phi,kappa)
       {
         print(i)
         y <- logisticSim2Mat(beta,tt,grp,phi=phi,kappa=kappa)
-        out1 <- logisticTest2(y,tt,grp,
-                              beta0=c(beta[1,1:3],beta[2,1:3],beta[1,4:5]))
+        out1 <- try(logisticTest2(y,tt,grp,
+                              beta0=c(beta[1,1:3],beta[2,1:3],
+                                beta[1,4:5])),TRUE)
         out2 <- quadForm(y,grp,psi,shrink=TRUE)        
         out3 <- quadForm(y,grp,psi,shrink=FALSE)
         
-        pval[i,1] <- pchisq(2*out1$loglik,3,lower=FALSE)
+        if(length(grep("loglik",names(out1)))!=0)
+          pval[i,1] <- pchisq(2*out1$loglik,3,lower=FALSE)
+        else
+          pval[i,1] <- NA
         pval[i,2] <- pchisq(out2$quadform,psidf,lower=FALSE)
         pval[i,3] <- pchisq(out3$quadform,psidf,lower=FALSE)        
       }
@@ -315,6 +336,6 @@ powerCalc <- function(x0,x1,alpha=0.05)
 {
   z <- vector(length=3)
   for( i in 1:3 )
-    z[i] <- mean(x1[,i]<quantile(x0[,i],alpha))
+    z[i] <- mean(x1[,i]<quantile(x0[,i],alpha,na.rm=T),na.rm=T)
   z
 }
