@@ -95,13 +95,18 @@ quadForm <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
     # estimate within sample variance matrix, sigma
     # sigma <- var(y-yhat)
     # sigma <- cov.shrink(y,verb=FALSE)
+    n <- nrow(y)
     if(shrink)
       {
         sigma <- cov.shrink(y-yhat,verb=FALSE)
       }
     else
       {
-        sigma <- var(y-yhat)
+        if(addZIntercept)
+          zdf <- ncol(model.matrix(~z))
+        else
+          zdf <- ncol(model.matrix(~z-1))
+        sigma <- var(y-yhat)*(n-1)/(n-zdf)
       }
     
     # sigma <- var(y)
