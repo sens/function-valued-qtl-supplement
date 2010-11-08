@@ -74,7 +74,7 @@ varBHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
       }
     else
       {
-        sigma <- var(y-yhat)*(n-1)/(n-df)
+        sigma <- var(y-yhat)*(n-1)/(n-zdf)
       }
     # project sigma on phi
     pp <- bHat(sigma,phi,phi,addZIntercept=addPhiIntercept,

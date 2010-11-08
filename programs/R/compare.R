@@ -3,9 +3,9 @@ source("fr.R")
 
 # 13 time points
 tt <- seq(0,6,by=0.5)
-# two groups of 100 each
-n <- 100
-grp <- c(rep(0,1000),rep(1,1000))
+# two groups of n each
+n <- 200
+grp <- c(rep(0,n),rep(1,n))
 
 # natural spline basis with 6+1 df
 psi6 <- ns(tt,df=6)

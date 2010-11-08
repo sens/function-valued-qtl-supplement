@@ -51,8 +51,8 @@ logisticSim1 <- function(beta,tt,n,df=0)
       }
     else
       {
-        scaleFac <- n/(n-2)
-        ee <- matrix(rnorm(n*m),nrow=n,ncol=m)/scaleFac
+        scaleFac <- sqrt(df/(df-2))
+        ee <- matrix(rt(n*m,df=df),nrow=n,ncol=m)/scaleFac
       }
     for( i in 2:m )
       {
@@ -99,7 +99,7 @@ logisticSim2 <- function(beta,tt,grp,df=0)
       }
     y
   }
-
+ 
 logisticSim2Mat <- function(beta,tt,grp,phi,kappa)
   {
     ngrp <- length(table(grp))
@@ -271,10 +271,12 @@ logisticTest2 <- function(y,tt,grp,beta0=NULL,...)
 compareSimAR <- function(beta,nsim,tt,psi,grp,df=0)
   {
     
-    pval <- matrix(nrow=nsim,ncol=3)
+    # pval <- matrix(nrow=nsim,ncol=3)
+    pval <- matrix(nrow=nsim,ncol=5)    
+    n <- length(grp)
     ngrp <- length(unique(grp))
     psidf <- ncol(model.matrix(~psi))*(ngrp-1)
-          
+    
     for( i in 1:nsim )
       {
         print(i)
@@ -291,6 +293,8 @@ compareSimAR <- function(beta,nsim,tt,psi,grp,df=0)
           pval[i,1] <- NA
         pval[i,2] <- pchisq(out2$quadform,psidf,lower=FALSE)
         pval[i,3] <- pchisq(out3$quadform,psidf,lower=FALSE)        
+        pval[i,4] <- photel(out2$quadform,n-ngrp,psidf,lower=FALSE)
+        pval[i,5] <- photel(out3$quadform,n-ngrp,psidf,lower=FALSE)        
       }
     pval
 }
@@ -299,7 +303,9 @@ compareSimAR <- function(beta,nsim,tt,psi,grp,df=0)
 compareSimMat <- function(beta,nsim,tt,psi,grp,phi,kappa)
   {
     
-    pval <- matrix(nrow=nsim,ncol=3)
+    # pval <- matrix(nrow=nsim,ncol=3)
+    pval <- matrix(nrow=nsim,ncol=5)    
+    n <- length(grp)
     ngrp <- length(unique(grp))
     psidf <- ncol(model.matrix(~psi))*(ngrp-1)
     
@@ -319,6 +325,8 @@ compareSimMat <- function(beta,nsim,tt,psi,grp,phi,kappa)
           pval[i,1] <- NA
         pval[i,2] <- pchisq(out2$quadform,psidf,lower=FALSE)
         pval[i,3] <- pchisq(out3$quadform,psidf,lower=FALSE)        
+        pval[i,4] <- photel(out2$quadform,n-ngrp,psidf,lower=FALSE)
+        pval[i,5] <- photel(out3$quadform,n-ngrp,psidf,lower=FALSE)        
       }
     pval
 }
@@ -326,16 +334,65 @@ compareSimMat <- function(beta,nsim,tt,psi,grp,phi,kappa)
 # kolmogorov-smirnov test applied to each column of p-values
 ksTest <- function(x)
 {
-  z <- vector(length=3)
-  for( i in 1:3 )
+  z <- vector(length=ncol(x))
+  for( i in 1:ncol(x) )
     z[i] <- ks.test(x[,i],"punif")$p.value
   z
 }
 
 powerCalc <- function(x0,x1,alpha=0.05)
 {
-  z <- vector(length=3)
-  for( i in 1:3 )
+  z <- vector(length=col(x0))
+  for( i in 1:ncol(x0) )
     z[i] <- mean(x1[,i]<quantile(x0[,i],alpha,na.rm=T),na.rm=T)
   z
 }
+
+# function to calculate empirical type-I error for selected colums
+sizeCalc <- function(x,size=c(0.1,0.05,0.01),cols=c(1,4,5))
+  {
+    z <- matrix(nrow=length(size),ncol=length(cols))
+    for( j in 1:length(cols) )
+      for( i in 1:length(size) )
+      {
+        z[i,j] <- mean(x[,cols[j]]<size[i],na.rm=T)
+      }
+    z
+  }
+
+###############################
+# ROC
+###############################
+
+plotROC <- function(x0,x1,cols=1:3,lty=1:length(cols))
+  {
+    plot(c(0,1),c(0,1),type="n",xaxs="i",yaxs="i",ylim=c(0,1),xlim=c(0,1))
+    p <- seq(0,1,by=0.01)
+    for( i in 1:length(cols) )
+      {
+        cutoffs <- quantile(x0[,cols[i]],p,na.rm=T)
+        cutoffs[1] <- 0
+        cutoffs[length(p)] <- 1
+        sens <- c(0,cumsum(hist(x1[,cols[i]],breaks=cutoffs,plot=FALSE)$counts))
+        lines(p,sens/max(sens),lty=lty[i])
+      }
+  }
+
+##############################
+# hotelling's t^2 functions
+##############################
+
+# we use the fact that T^2(m,p) is (m*p/(m-p+1)) F(p,m-p+1)
+
+photel <- function(x,m,p,lower.tail=TRUE,log.p=FALSE)
+  {
+    scaleFac <- m*p/(m-p+1)
+    pf(x/scaleFac,p,m-p+1,lower.tail=lower.tail,log.p=log.p)
+  }
+
+dhotel <- function(x,m,p)
+  {
+    scaleFac <- m*p/(m-p+1)
+    df(x/scaleFac,p,m-p+1)/scaleFac
+  }
+
