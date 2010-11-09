@@ -1,5 +1,5 @@
 # gzipped tar file dependencies
-xiongSupplement.tgz: R/fr.R R/logistic.R R/steps1.R py/*.{py,pyx} py/Makefile\
+xiongSupplement.tgz: R/fr.R R/logistic.R R/steps1.R py/*.py py/bspline.pyx py/Makefile\
 	data/N1_GenoTypes.csv data/N1_CTvsProb_BW6min.csv
 	# create directories
 	mkdir -p xiongSupplement/R
