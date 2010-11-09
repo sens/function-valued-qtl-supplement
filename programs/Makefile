@@ -1,3 +1,4 @@
+# group files by type
 Rfiles = R/fr.R R/logistic.R R/steps1.R
 pyfiles :=  $(wildcard py/*.py) $(wildcard py/*.pyx) 
 datafiles = data/N1_GenoTypes.csv data/N1_CTvsProb_BW6min.csv
@@ -17,3 +18,6 @@ xiongSupplement.tgz: $(Rfiles) $(pyfiles) $(datafiles)
 
 clean:
 	rm -rf xiongSupplement
+purge:
+	rm -rf xiongSupplement
+	rm xiongSupplement.tgz
