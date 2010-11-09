@@ -1,6 +1,7 @@
+.PHONY: clean purge
 # group files by type
-Rfiles = R/fr.R R/logistic.R R/steps1.R
-pyfiles :=  $(wildcard py/*.py) $(wildcard py/*.pyx) 
+Rfiles = R/fr.R R/logistic.R 
+pyfiles :=  $(wildcard py/*.py) $(wildcard py/*.pyx) py/Makefile
 datafiles = data/N1_GenoTypes.csv data/N1_CTvsProb_BW6min.csv
 
 # gzipped tar file dependencies
