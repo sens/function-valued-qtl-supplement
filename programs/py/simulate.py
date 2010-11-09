@@ -141,7 +141,7 @@ class SummarizeSim(object):
         #plt.savefig('Statistics-%d.png'% N, format='png')
         plt.show()
     def type1_err(self):
-        crit = [chi2.ppf(1-thres, self.df) for thres in (0.05, 0.005, 0.001)]
+        crit = [chi2.ppf(1-thres, self.df) for thres in (0.1, 0.05, 0.01, 0.005, 0.001)]
         return [(self.ssqs > x).sum() / float(len(self.ssqs)) for x in crit]
 
 class ResultsSim(RegressionResults, SummarizeSim):

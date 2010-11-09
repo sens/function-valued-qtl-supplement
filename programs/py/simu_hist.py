@@ -20,4 +20,4 @@ def simu(nruns = 1000, sample_size=200,is_masked=False):
     return res_s
 
 if __name__ == "__main__":
-    res = simu(1000, 400,is_masked=False)
+    res = simu(5000, 100,is_masked=False)

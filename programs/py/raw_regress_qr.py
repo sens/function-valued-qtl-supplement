@@ -57,7 +57,7 @@ class Regression(object):
         # B can be directly computed from QR decomposition
         self._B = ZinvRQ * self.Y * PsiinvRQ.T 
         # compute cov_y and cov_b
-        tmp = data_cov(self.Yerr.T) #data_cov(self.Y.T)
+        tmp = data_cov(self.Yerr.T, self.deg_fr) #data_cov(self.Y.T)
         tmp_L = cholesky(tmp)
         cov_y = SparseDiag(tmp_L,self.N)
         tmp = cov_y.left_prod(self.kprod)
@@ -96,7 +96,8 @@ def basic_reg(Y,Psi,Z,selMat):
     """    
     N, q = Z.shape
     n, k = Psi.shape
-    tmp = data_cov(Y.T)
+    deg_fr = len(selMat)*q
+    tmp = data_cov(Y.T, deg_fr)
     cov_y =  np.kron(np.eye(N), tmp)
     vecYT = vec(Y.T)
     Y,Psi, Z = [np.mat(x) for x in (Y,Psi,Z)]

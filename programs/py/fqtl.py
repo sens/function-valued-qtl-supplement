@@ -135,11 +135,11 @@ def compute_qtl(Zs, Y, Psi, T, reg_class, selMat=None):
         Zs : a sequence of Z.
         The rest are passed to OneRegression.
         """        
-        workers = mp.Pool()
-        runs = [workers.apply_async(OneRegression,(Y,Psi,Z,T,reg_class, selMat)) for Z in Zs]
-        regs = [x.get(timeout=1) for x in runs]
+        ## workers = mp.Pool()
+        ## runs = [workers.apply_async(OneRegression,(Y,Psi,Z,T,reg_class, selMat)) for Z in Zs]
+        ## regs = [x.get(timeout=10) for x in runs]
         
-        ## regs = [OneRegression(Y,Psi,np.asarray(Z),T,reg_class, selMat)for Z in Zs]
+        regs = [OneRegression(Y,Psi,np.asarray(Z),T,reg_class, selMat)for Z in Zs]
                 
         return regs 
             

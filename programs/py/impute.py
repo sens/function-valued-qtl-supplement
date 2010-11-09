@@ -63,7 +63,7 @@ def compute_one(flnm, gen_model, pheno, Psi, time_points, selMat):
         dt = csv.reader(fl, delimiter=',', quotechar='"')
         markers = next(dt)[1:]          # not used here
         [(IDs.append(x[0]), geno.append([float(y) for y in x[1:]])) for x in dt]
-    return [x.ssq for x in compute_qtl([gen_model(x) for x in zip(*geno)], pheno, Psi, time_points, Regression, selMat)]
+    return [x.pval for x in compute_qtl([gen_model(x) for x in zip(*geno)], pheno, Psi, time_points, Regression, selMat)]
         
 def compute(*args, **kwargs):
     """

@@ -30,7 +30,7 @@ def vect(A):
     """
     return A.ravel('C')
 
-def data_cov(Y):
+def data_cov(Y,df):
     """
     Compute the variance-covariance matrix from N independent samples.
 
@@ -38,8 +38,6 @@ def data_cov(Y):
     we want to compute
                1/(N-n) \Sigm_i^N (y_i-mu)(y_i-mu)^T,
     where mu is a vector of means.
-
-    Note that this version works with missing data.
     
     Parameters:
     ----------------------
@@ -55,9 +53,5 @@ def data_cov(Y):
     if len(Y.shape) == 1 or Y.shape[1] == 1:
         return 0
     n, N = Y.shape               # number of columns is the number of samples
-    ## # potential faster equivalent: np.cov(Y, bias=1)*N/(N-n)
-    ## ave_Y = Y.mean(axis=1)        # take average across samples
-    ## tmp = Y - ave_Y[:,np.newaxis]
-    ## if isinstance(Y, ma.MaskedArray):
-    ##     tmp = tmp.filled(0)
-    return np.mat(np.cov(Y, bias=0))#*N/(N-1) #np.dot(tmp, tmp.T)/(N-n)
+    
+    return np.mat(np.cov(Y, rowvar=1))*(N-1)/(N-df)
