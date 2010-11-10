@@ -111,7 +111,10 @@ class DataSet(object):
         self.T = T
         # generate design matrix
         geno = gen_genotypes(proportions=chances, size=sample_size)
-        self.Z = np.array([np.ones(sample_size),geno]).T # add a constant term
+        if len(fcn_lst) > 1:
+            self.Z = np.array([np.ones(sample_size),geno]).T # add a constant term
+        else:
+            self.Z = np.array([geno]).T
         # generate observations
         stoc_proc = StochasticProc(self.Z, fcn_lst)
         tmp = stoc_proc.values(T)

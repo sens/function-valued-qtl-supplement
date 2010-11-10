@@ -6,7 +6,7 @@ from collections import namedtuple
 import numpy as np
 from matplotlib import pyplot as plt
 from bspline import Bspline
-from raw_regress import Regression, RegressionMissing
+from raw_regress_qr import Regression
 from simulate import DataSet, parallel_sim
 
 from rpy2 import robjects as robj
@@ -26,7 +26,7 @@ def simulate_cross_section(fcn, T, sample_size=400,is_masked=False):
     # generate datasets
     datasets = [DataSet(prop, fcn, sample_size, T, basis,is_masked,4,2) for i in range(nruns)]
 
-    res_f =  parallel_sim(datasets, RegressionMissing) if is_masked else parallel_sim(datasets, Regression)
+    res_f =  parallel_sim(datasets, Regression)
 
     res_c = [compute_cross_section(data.Y, data.Z.squeeze()) for data in datasets]
 
@@ -45,8 +45,8 @@ def compute_cross_section(Y,labels):
     assert len(labels) == Y.shape[0]
 
     means = Y.mean(axis=1)
-    robj.globalEnv['y'] = robj.FloatVector(means)
-    robj.globalEnv['x'] = robj.IntVector(labels)
+    robj.globalenv['y'] = robj.FloatVector(means)
+    robj.globalenv['x'] = robj.IntVector(labels)
     R("x = factor(x)")
     res = R("summary(aov(y~x-1))[[1]]$'Pr(>F)'")[0]
     return res
@@ -111,15 +111,17 @@ if __name__ == "__main__":
     expo_T = lambda n: -460. + np.arange(n)*16.0
     logit = lambda x: 1/(1+1.0*np.exp(-x))
     logit_T = lambda n: -6. + np.arange(n)*1.0
-    res_quad = simu_time(quad, quad_T,top=11)
-    #res_quad_missing = simu_time(quad, quad_T,top=11, is_masked=True)
-    res_expo = simu_time(expo, expo_T, bottom=4)
-    #res_expo_missing = simu_time(expo, expo_T, bottom=4,is_masked=True)
+    res_quad = simu_time(quad, quad_T,top=11)    
+    res_expo = simu_time(expo, expo_T, bottom=4)    
     res_logit = simu_time(logit, logit_T,top=9)
-    #res_logit_missing = simu_time(logit, logit_T,top=9,is_masked=True)
-    sam_quad = simu_sample(quad, quad_T, 7, 200+100.*np.arange(14))
-    #sam_quad_missing = simu_sample(quad, quad_T, 7, 200+100.*np.arange(14),is_masked=True)
-    sam_expo = simu_sample(expo, expo_T, 5, 200+100.*np.arange(5))
-    #sam_expo_missing = simu_sample(expo, expo_T, 5, 200+100.*np.arange(5),is_masked=True)
+    
+    sam_quad = simu_sample(quad, quad_T, 7, 200+100.*np.arange(14))    
+    sam_expo = simu_sample(expo, expo_T, 5, 200+100.*np.arange(5))    
     sam_logit = simu_sample(logit, logit_T, 6, 200+100.*np.arange(8))
-    #sam_logit_missing = simu_sample(logit, logit_T, 6, 200+100.*np.arange(8),is_masked=True)
+    
+    plot_sect(res_quad, range(5,11), 'number of time points', 'Quadratic')
+    plot_sect(res_expo, range(4,10), 'number of time points', 'Exponential')
+    plot_sect(res_logit, range(5,9), 'number of time points', 'Logistic')
+    plot_sect(sam_quad, 200+100.*np.arange(14), 'sample size', 'Quadratic')
+    plot_sect(sam_expo, 200+100.*np.arange(5), 'sample size', 'Exponential')
+    plot_sect(sam_logit, 200+100.*np.arange(8), 'sample size', 'Logistic')
