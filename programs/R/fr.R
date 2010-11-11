@@ -322,7 +322,7 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
    }
 
 
-funcScanonePerm <- function(y,geno,phi,nperm,method="hk",crit="qf",
+funcScanonePerm <- function(y,cr,phi,nperm,method="hk",crit="qf",
                             weightPhi=NULL,shrink=TRUE)
   {
     # if genotype probabilities have not been calculated, calculate them
