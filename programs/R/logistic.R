@@ -1,26 +1,89 @@
 # library for the matern covariance function
 library(geoR)
 
+###########################################
+# functions to generate covariance matrices
+###########################################
+
 # creates covariance matrix from the covariance function
 # u=time points
 # phi=scale
 # kappa=smoothness
-maternCov <- function(u,phi,kappa)
+covMatern <- function(u,phi,kappa)
   {
     toeplitz(matern(u,phi,kappa))
   }
 
-# simulates multivariate normal random vectors with matern covariance
-# function
-# n=sample size
-# u,phi,kappa same as maternCov
-rnormMatern <- function(n,u,phi,kappa)
+# creates covariance matrix for equicorrelated variables
+# p = dimension of the random vector
+# r = common correlation
+covEquicor <- function(p,r)
   {
-    ee <- rnorm(n*length(u))
-    A <- Matrix::chol(maternCov(u,phi,kappa))
-    ee <- matrix(ee,nrow=n)%*%A
+    JJ <- matrix(rep(1,p^2),nrow=p)
+    II <- diag(rep(1,p))
+    # we do not check for singularity
+    (1-r) * II + r * JJ
+  }
+
+
+# creates covariance matrix for autocorrelated variables
+# u = time points
+# r = correlation between two points separated by unit distance
+covAutocor <- function(u,r)
+  {
+    toeplitz(exp(log(r)*abs(u-u[1])))
+  }
+
+
+#################################################################
+# functions to simulate multivariate normal with given covariance
+#################################################################
+
+rnormMatern <- function(n,u,phi,kappa,s2=1)
+  {
+    sigma <- s2*covMatern(u,phi,kappa)
+    ee <- rnormMulti(n,sigma)
     ee
   }
+
+rnormEquicor <- function(n,p,r,s2=1)
+  {
+    sigma <- s2*covEquicor(p,r)
+    ee <- rnormMulti(n,sigma)
+    ee
+  }
+
+rnormAutocor <- function(n,u,r,s2=1)
+  {
+    sigma <- s2*covAutocor(u,r)
+    ee <- rnormMulti(n,sigma)
+    ee
+  }
+
+##########################################
+# function to generate multivariate normal
+##########################################
+
+# function to simulate a multivariate normal distribution with
+# an arbitrary covariance matrix (and zero mean)
+rnormMulti <- function(n,sigma)
+  {
+    d <- dim(sigma)
+    if(d[1]!=d[2])
+      stop("Sigma not square.")
+    else
+      {
+        p <- nrow(sigma)
+        ee <- rnorm(n*p)
+        A <- Matrix::chol(sigma))
+        ee <- matrix(ee,nrow=n)%*%A
+      }
+    ee
+  }
+
+################################
+# logistic growth curve function
+################################
 
 # logistic growth curve as a function
 logisticFun <- function(beta,tt)
