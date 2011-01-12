@@ -95,6 +95,11 @@ logisticFun <- function(beta,tt)
     beta[1] / (1+ beta[2]*exp(-beta[3]*tt))
   }
 
+
+##################################################################
+# simulates logistic functional data with autocorrelated error
+##################################################################
+
 logisticSim1 <- function(beta,tt,n,df=0)
   {
     # autocorrelation
@@ -124,6 +129,9 @@ logisticSim1 <- function(beta,tt,n,df=0)
    mm + sqrt(ss)*ee
   }
 
+##################################################################
+# simulates logistic functional data with Matern error
+##################################################################
 
 logisticSim1Mat <- function(beta,tt,n,phi,kappa)
   {
@@ -141,9 +149,14 @@ logisticSim1Mat <- function(beta,tt,n,phi,kappa)
     mm + sqrt(ss)*ee
   }
 
+###########################################################################
+# simulates logistic functional data with autocorrelated error given groups
+###########################################################################
 
 logisticSim2 <- function(beta,tt,grp,df=0)
   {
+    # grp is a vector denoting the group membership
+    # number of groups
     ngrp <- length(table(grp))
     grp <- as.numeric(as.factor(grp))-1
 
@@ -163,8 +176,13 @@ logisticSim2 <- function(beta,tt,grp,df=0)
     y
   }
  
+###########################################################################
+# simulates logistic functional data with Matern error given groups
+###########################################################################
+
 logisticSim2Mat <- function(beta,tt,grp,phi,kappa)
   {
+    # number of groups
     ngrp <- length(table(grp))
     grp <- as.numeric(as.factor(grp))-1
 
@@ -185,8 +203,10 @@ logisticSim2Mat <- function(beta,tt,grp,phi,kappa)
     y
   }
 
-
-
+###################################################################
+# function to calculate the log likelihood function for functional
+# data with logistic mean function and autocorrelated error
+###################################################################
 
 logisticLik <- function(beta,y,tt)
   {
@@ -210,12 +230,19 @@ logisticLik <- function(beta,y,tt)
     loglik
   }
 
+#######################################################################
+# function to calculate log likelihood of functional data with
+# logistic mean function and autocorrelated error; the parameters have
+# been transformed to make the scale better for optimzation function
+#######################################################################
 
 logisticLik1 <- function(beta,y,tt)
   {
     beta1 <- c(exp(beta[1:3]),tanh(beta[4]),exp(beta[5]))
     -logisticLik(beta1,y,tt)
   }
+
+# calculation of mle with the 
 
 logisticMLE1 <- function(y,tt,beta0=c(0,0,0,0,0),loglik=FALSE,...)
   {
@@ -393,6 +420,8 @@ compareSimMat <- function(beta,nsim,tt,psi,grp,phi,kappa)
       }
     pval
 }
+
+####################################################################
 
 # kolmogorov-smirnov test applied to each column of p-values
 ksTest <- function(x)
