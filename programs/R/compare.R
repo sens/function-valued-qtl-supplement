@@ -1,18 +1,18 @@
 source("logistic.R")
 source("fr.R")
 
-# 13 time points
+## 13 time points
 tt <- seq(0,6,by=0.5)
-# two groups of n each
+## two groups of n each
 n <- 200
 grp <- c(rep(0,n),rep(1,n))
 
-# natural spline basis with 6+1 df
+## natural spline basis with 6+1 df
 psi6 <- ns(tt,df=6)
 
-# parameter values modeled after Ma et. al. paper
-# correlation is chosen to be consistent with Matern covariance
-# function to be considered later
+## parameter values modeled after Ma et. al. paper
+## correlation is chosen to be consistent with Matern covariance
+## function to be considered later
 
 rr2 <- matern(0.5,1,2)
 rr1 <- matern(0.5,1,1)
@@ -28,7 +28,7 @@ beta11[,4] <- c(rr1,rr1)
 beta01 <- beta21
 beta01[,4] <- c(rr0,rr0)
 
-# null parameter value is average of alternative
+## null parameter value is average of alternative
 beta20 <- apply(beta21,2,mean)
 beta20 <- rbind(beta20,beta20)
 
@@ -70,7 +70,7 @@ out214 <- compareSimAR(beta21,nsim,tt,psi6,grp,df=4)
 out21m <- compareSimMat(beta21,nsim,tt,psi6,grp,phi=1,kappa=2)
 
 
-# tests for the null distribution
+## tests for the null distribution
 ksTest(out000)
 ksTest(out004)
 ksTest(out00m)
@@ -83,7 +83,7 @@ ksTest(out200)
 ksTest(out204)
 ksTest(out20m)
 
-# power in the alternative case
+## power in the alternative case
 powerCalc(out000,out010)
 powerCalc(out100,out110)
 powerCalc(out200,out210)
