@@ -1,6 +1,7 @@
 library(qtl)
 library(ggplot2)
 source('logistic.R')
+source('fr.R')
 
 beta.coef <- matrix(c(30, 5.0, 0.5, 28.5, 5.0, 0.5, 27.5, 5., 0.5), byrow=T, nrow=3)
 tt <- 0.:9
@@ -10,19 +11,19 @@ structured.cov <- matrix( c(0.72, 0.39, 0.45, 0.48, 0.50, 0.53, 0.60, 0.64, 0.68
 
 ## generate both genotypes and phenotypes
 gen.data <- function(sample.size, cov.fcn){
-  popu.size <- 10000  # population size
+  ##popu.size <- 10000  # population size
   
   ## simulate genotypes
   mp <- sim.map(100, n.mar=6, include.x=F, eq.spacing=T) # simulate map
   md <- c(1,32,0,0)                       # one QTL at 32cM on chrom. 1
-  cross <- sim.cross(map=mp, model=md, type='f2', n.ind=popu.size, keep.qtlgeno=T) # simulate 10,000 individuals
+  samples <- sim.cross(map=mp, model=md, type='f2', n.ind=sample.size, keep.qtlgeno=T)
 
   ## retrieve sample genotypes
-  ind <- sample(popu.size, sample.size)
-  samples <- subset.cross(cross, ind=ind)
-  ## subsetting qtlgeno by hand since subset.cross does not do it.
-  qtlgeno <- samples$qtlgeno[ind]
-  samples$qtlgeno <- qtlgeno
+  ## ind <- sample(popu.size, sample.size)
+  ## samples <- subset.cross(cross, ind=ind)
+  ## ## subsetting qtlgeno by hand since subset.cross does not do it.
+  ## qtlgeno <- samples$qtlgeno[ind]
+  ## samples$qtlgeno <- qtlgeno
 
   ## simulate phenotypes
   ## 1. get the means
@@ -121,4 +122,19 @@ diagnostics <- function(){
   print(equicorr$cov)
   print(structured$cov)
   dev.off()
+}
+
+## One simulation run
+one.sim <- function(sample.size=100, cov.fcn='autocorr'){
+  ## generate data and calculate the genotype probability
+  samples <<- gen.data(sample.size, cov.fcn)
+  samples$geno$'1'$data <- samples$geno$'1'$data - 1
+  Y <- samples$pheno
+  tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
+  tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:100, sep='')) # cross class expects the phenotypes to be a data frame
+
+  ## functional regression
+  basis.fcn <- bs(tt, df=5, intercept=TRUE)
+  res <<- funcScanone(Y, tmp, basis.fcn, crit="ss")
+  return(res$pos[which.max(res$lod)])
 }
