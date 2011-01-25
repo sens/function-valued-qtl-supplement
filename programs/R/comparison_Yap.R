@@ -128,13 +128,17 @@ diagnostics <- function(){
 one.sim <- function(sample.size=100, cov.fcn='autocorr'){
   ## generate data and calculate the genotype probability
   samples <<- gen.data(sample.size, cov.fcn)
-  samples$geno$'1'$data <- samples$geno$'1'$data - 1
+  # not needed (yet)
+  # samples$geno$'1'$data <- samples$geno$'1'$data - 1
   Y <- samples$pheno
-  tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
-  tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:100, sep='')) # cross class expects the phenotypes to be a data frame
+  # we won't estimat map to be comparable
+  # tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
+  tmp <- calc.genoprob(samples,  step=4)
+  # better done in the simulation function (not needed?)
+  tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:sample.size, sep='')) # cross class expects the phenotypes to be a data frame
 
   ## functional regression
-  basis.fcn <- bs(tt, df=5, intercept=TRUE)
+  basis.fcn <- bs(tt, df=3, intercept=TRUE)
   res <<- funcScanone(Y, tmp, basis.fcn, crit="ss")
   return(res$pos[which.max(res$lod)])
 }

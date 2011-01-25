@@ -387,6 +387,10 @@ funcScanonePerm <- function(y,cr,phi,nperm,method="hk",crit="qf",
                }
            }
        }
+     # to conform to R/qtl scanone.perm
+     out <- apply(out[,-(1:2)],2,max)
+     out <- matrix(out,ncol=1)
+     class(out) <- c("scanoneperm", "matrix")
      out
   }
 
