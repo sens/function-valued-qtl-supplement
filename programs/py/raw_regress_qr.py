@@ -8,7 +8,7 @@ from numpy import ma
 from numpy.linalg import qr, inv, cholesky, solve
 from scipy.stats import chi2
 
-from utils import *
+from .utils import *
 from sparseDiag import SparseDiag
 
 class Regression(object):

@@ -1,5 +1,6 @@
 library(qtl)
 library(ggplot2)
+library(multicore)
 source('logistic.R')
 source('fr.R')
 
@@ -7,7 +8,17 @@ beta.coef <- matrix(c(30, 5.0, 0.5, 28.5, 5.0, 0.5, 27.5, 5., 0.5), byrow=T, nro
 tt <- 0.:9
 len.tt <- 10                                 # time series length
 
-structured.cov <- matrix( c(0.72, 0.39, 0.45, 0.48, 0.50, 0.53, 0.60, 0.64, 0.68, 0.68, 0.39, 1.06, 1.61, 1.60, 1.50, 1.48, 1.55, 1.47, 1.35, 1.29, 0.45, 1.61, 3.29, 3.29, 3.17, 3.09, 3.19, 3.04, 2.78, 2.53, 0.48, 1.60, 3.29, 3.98, 4.07, 4.01, 4.17, 4.18, 4.00, 3.69, 0.50, 1.50, 3.17, 4.07, 4.70, 4.68, 4.66, 4.78, 4.70, 4.36, 0.53, 1.48, 3.09, 4.07, 4.68, 5.56, 6.23, 6.87, 7.11, 6.92, 0.60, 1.55, 3.19, 4.17, 4.66, 6.23, 8.59, 10.16, 10.80, 10.70, 0.64, 1.47, 3.04, 4.18, 4.78, 6.87, 10.16, 12.74, 13.80, 13.80, 0.68, 1.35, 2.78, 4.00, 4.70, 7.11, 10.80, 13.80, 15.33, 15.35, 0.68, 1.29, 2.53, 3.69, 4.36, 6.92, 10.70, 13.80, 15.35, 15.77), byrow=T, nrow=10)
+structured.cov <- matrix(
+c(0.72, 0.39, 0.45, 0.48, 0.50, 0.53, 0.60, 0.64, 0.68, 0.68,
+  0.39, 1.06, 1.61, 1.60, 1.50, 1.48, 1.55, 1.47, 1.35, 1.29,
+  0.45, 1.61, 3.29, 3.29, 3.17, 3.09, 3.19, 3.04, 2.78, 2.53,
+  0.48, 1.60, 3.29, 3.98, 4.07, 4.01, 4.17, 4.18, 4.00, 3.69,
+  0.50, 1.50, 3.17, 4.07, 4.70, 4.68, 4.66, 4.78, 4.70, 4.36,
+  0.53, 1.48, 3.09, 4.07, 4.68, 5.56, 6.23, 6.87, 7.11, 6.92,
+  0.60, 1.55, 3.19, 4.17, 4.66, 6.23, 8.59, 10.16,10.80,10.70,
+  0.64, 1.47, 3.04, 4.18, 4.78, 6.87, 10.16,12.74,13.80,13.80,
+  0.68, 1.35, 2.78, 4.00, 4.70, 7.11, 10.80,13.80,15.33,15.35,
+  0.68, 1.29, 2.53, 3.69, 4.36, 6.92, 10.70,13.80,15.35,15.77), byrow=T, nrow=10)
 
 ## generate both genotypes and phenotypes
 gen.data <- function(sample.size, cov.fcn){
@@ -83,9 +94,9 @@ plot.hm <- function(cov.mat, time){
   return(hmp)
 }
 ## generate a series of diagonistic plots
-diagnostics <- function(){
+diagnostics <- function(sample.size=200, file.name='diagnostics.pdf'){
   diag.one <- function(cov.fcn){
-    samples <- gen.data(200, cov.fcn)
+    samples <- gen.data(sample.size, cov.fcn)
     Y <- samples$pheno
     X <- samples$qtlgeno
 
@@ -107,7 +118,7 @@ diagnostics <- function(){
     return(list(mean=mean.curves, cov=hm))
   }
   
-  pdf(file='diagnostics.pdf')
+  pdf(file=file.name)
   autocorr <- diag.one('autocorr')
   equicorr <- diag.one('equicorr')
   structured <- diag.one('structured')
@@ -125,20 +136,41 @@ diagnostics <- function(){
 }
 
 ## One simulation run
-one.sim <- function(sample.size=100, cov.fcn='autocorr'){
+one.sim <- function(sample.size=100, cov.fcn='autocorr', basis.fcn, meth){
   ## generate data and calculate the genotype probability
-  samples <<- gen.data(sample.size, cov.fcn)
-  # not needed (yet)
-  # samples$geno$'1'$data <- samples$geno$'1'$data - 1
+  samples <- gen.data(sample.size, cov.fcn)
+  ## not needed (yet)
+  ## samples$geno$'1'$data <- samples$geno$'1'$data - 1
   Y <- samples$pheno
-  # we won't estimat map to be comparable
-  # tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
+  ## we won't estimat map to be comparable
+  ## tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
   tmp <- calc.genoprob(samples,  step=4)
-  # better done in the simulation function (not needed?)
-  tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:sample.size, sep='')) # cross class expects the phenotypes to be a data frame
+  ## better done in the simulation function (not needed?)
+  ##tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:sample.size, sep='')) # cross class expects the phenotypes to be a data frame
 
   ## functional regression
-  basis.fcn <- bs(tt, df=3, intercept=TRUE)
-  res <<- funcScanone(Y, tmp, basis.fcn, crit="ss")
+  
+  res <- funcScanone(Y, tmp, basis.fcn, crit=meth)
   return(res$pos[which.max(res$lod)])
 }
+
+## simulations
+simulate.multi <- function(nrun=1000, sample.size=100, cov.fcn='structured', crit='ss'){
+
+  res <- rep(0., nrun)
+  basis <- bs(tt, df=4, intercept=TRUE)
+
+  for (i in 1:nrun){
+    res[i] <- one.sim(sample.size, cov.fcn, basis, crit)
+  }
+
+  return(res)
+}
+
+## compute various metrics
+calc.metrics <- function(vec){
+  return( list(mean(vec), sd(vec), sqrt((mean(vec)-32.)^2+sd(vec^2))) )
+}
+
+param.df <- data.frame( list(sample.size=rep(c(100, 400), 3), cov.fcn=c('autocorr', 'autocorr', 'equicorr', 'equicorr', 'structured', 'structured')) )
+#res <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'ss'), param.df, mc.cores=4)
