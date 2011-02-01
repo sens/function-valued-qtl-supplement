@@ -111,27 +111,31 @@ diagnostics <- function(sample.size=200, file.name='diagnostics.pdf'){
     }
     fig.true <- plot.ts(mean.vals, tt, 1:3, 1:3, linetype=2)
     mean.curves <- ggplot()+fig.sam+fig.true+xlab('time')+ylab('phenotype')+opts(title=paste('mean curves with', cov.fcn))
-    
+
+    ## plot all samples along with their mean curves
+    all.curves <- ggplot() + fig.sam + plot.ts(Y, tt, 1:sample.size, X, alpha=I(1/3.)) + xlab('time')+ylab('phenotype')+opts(title=paste('all curves with', cov.fcn))
+
     ## look at the heatmap of residual covariance
     hm <- ggplot() + plot.hm(cov(resid(lrg)), 1:10) + xlab('time') + ylab('time') +opts(title=cov.fcn)
     
-    return(list(mean=mean.curves, cov=hm))
+    return(list(mean=mean.curves, all=all.curves, cov=hm))
   }
   
   pdf(file=file.name)
   autocorr <- diag.one('autocorr')
   equicorr <- diag.one('equicorr')
   structured <- diag.one('structured')
-
+  tmp <- list(autocorr, equicorr, structured)
   ## plot the figures
   ## 1. mean curves
-  print(autocorr$mean)
-  print(equicorr$mean)
-  print(structured$mean)
-  ## 2. covariance heatmap
-  print(autocorr$cov)
-  print(equicorr$cov)
-  print(structured$cov)
+  lapply(tmp, function(x) print(x$mean));
+  ## 2. all curves
+  lapply(tmp, function(x) print(x$all));
+  ## 3. covariance heatmap
+  lapply(tmp, function(x) print(x$cov))
+  ## print(autocorr$cov)
+  ## print(equicorr$cov)
+  ## print(structured$cov)
   dev.off()
 }
 
@@ -139,15 +143,9 @@ diagnostics <- function(sample.size=200, file.name='diagnostics.pdf'){
 one.sim <- function(sample.size=100, cov.fcn='autocorr', basis.fcn, meth){
   ## generate data and calculate the genotype probability
   samples <- gen.data(sample.size, cov.fcn)
-  ## not needed (yet)
-  ## samples$geno$'1'$data <- samples$geno$'1'$data - 1
   Y <- samples$pheno
-  ## we won't estimat map to be comparable
-  ## tmp <- calc.genoprob(replace.map(samples, est.map(samples)),  step=4)
   tmp <- calc.genoprob(samples,  step=4)
-  ## better done in the simulation function (not needed?)
-  ##tmp$pheno <- data.frame(tmp$pheno, row.names=paste('sample', 1:sample.size, sep='')) # cross class expects the phenotypes to be a data frame
-
+  
   ## functional regression
   
   res <- funcScanone(Y, tmp, basis.fcn, crit=meth)
