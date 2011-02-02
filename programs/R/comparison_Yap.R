@@ -156,7 +156,7 @@ one.sim <- function(sample.size=100, cov.fcn='autocorr', basis.fcn, meth){
 simulate.multi <- function(nrun=1000, sample.size=100, cov.fcn='structured', crit='ss'){
 
   res <- rep(0., nrun)
-  basis <- bs(tt, df=4, intercept=TRUE)
+  basis <- bs(tt, df=4, intercept=FALSE)#TRUE)
 
   for (i in 1:nrun){
     res[i] <- one.sim(sample.size, cov.fcn, basis, crit)
@@ -171,4 +171,5 @@ calc.metrics <- function(vec){
 }
 
 param.df <- data.frame( list(sample.size=rep(c(100, 400), 3), cov.fcn=c('autocorr', 'autocorr', 'equicorr', 'equicorr', 'structured', 'structured')) )
-#res <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'ss'), param.df, mc.cores=4)
+#res.ss <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'ss'), param.df, mc.cores=4)
+#res.qf <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'qf'), param.df, mc.cores=4)
