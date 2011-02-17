@@ -167,7 +167,7 @@ simulate.multi <- function(nrun=1000, sample.size=100, cov.fcn='structured', cri
 
 ## compute various metrics
 calc.metrics <- function(vec){
-  return( list(mean(vec), sd(vec), sqrt((mean(vec)-32.)^2+sd(vec^2))) )
+  return( list(mean(vec), sd(vec), sqrt((mean(vec)-32.)^2+sd(vec)^2)) )
 }
 
 param.df <- data.frame( list(sample.size=rep(c(100, 400), 3), cov.fcn=c('autocorr', 'autocorr', 'equicorr', 'equicorr', 'structured', 'structured')) )
