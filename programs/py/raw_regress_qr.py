@@ -8,7 +8,7 @@ from numpy import ma
 from numpy.linalg import qr, inv, cholesky, solve
 from scipy.stats import chi2
 
-from .utils import *
+from utils import *
 from sparseDiag import SparseDiag
 
 class Regression(object):
@@ -29,6 +29,8 @@ class Regression(object):
         selMat : A selection matrix choosing certain rows of B so that only certain covariates are included
                  in hypothesis testing.
         """
+        ## selMat must be a matrix
+        assert isinstance(selMat, np.matrix), "The selection matrix is not a MATRIX."
         ## Y needs to be an array, not a matrix.  This is important in calculating covariance.
         self.N, self.q = Z.shape
         self.n, self.k = Psi.shape
@@ -40,8 +42,7 @@ class Regression(object):
             self.selMat = np.mat(np.eye(self.q))
         else:                           # only test certain covariates
             self.deg_fr = len(selMat) * self.k
-            self.selMat = np.mat(selMat)
-
+            
         self._pre_compute()
 
     def _pre_compute(self):
