@@ -42,7 +42,8 @@ class Regression(object):
             self.selMat = np.mat(np.eye(self.q))
         else:                           # only test certain covariates
             self.deg_fr = len(selMat) * self.k
-            
+            self.selMat = np.mat(selMat)
+
         self._pre_compute()
 
     def _pre_compute(self):
