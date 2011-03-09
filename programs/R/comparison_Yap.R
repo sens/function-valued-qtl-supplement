@@ -25,7 +25,7 @@ gen.data <- function(sample.size, cov.fcn){
   ##popu.size <- 10000  # population size
   
   ## simulate genotypes
-  mp <- sim.map(100, n.mar=6, include.x=F, eq.spacing=T) # simulate map
+  mp <- sim.map(rep(100,4), n.mar=6, include.x=F, eq.spacing=T) # simulate map
   md <- c(1,32,0,0)                       # one QTL at 32cM on chrom. 1
   samples <- sim.cross(map=mp, model=md, type='f2', n.ind=sample.size, keep.qtlgeno=T)
 
@@ -170,6 +170,6 @@ calc.metrics <- function(vec){
   return( list(mean(vec), sd(vec), sqrt((mean(vec)-32.)^2+sd(vec)^2)) )
 }
 
-param.df <- data.frame( list(sample.size=rep(c(100, 400), 3), cov.fcn=c('autocorr', 'autocorr', 'equicorr', 'equicorr', 'structured', 'structured')) )
+#param.df <- data.frame( list(sample.size=rep(c(100, 400), 3), cov.fcn=c('autocorr', 'autocorr', 'equicorr', 'equicorr', 'structured', 'structured')) )
 #res.ss <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'ss'), param.df, mc.cores=4)
 #res.qf <- mclapply(1:6, function(i, params) simulate.multi(10000, params[i,1], params[i,2], 'qf'), param.df, mc.cores=4)
