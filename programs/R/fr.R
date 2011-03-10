@@ -234,21 +234,23 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
 ##     out
 ##   }
 
- funcScanone <- function(y,cr,phi,method="hk",crit="qf",weightPhi=NULL,
-                         shrink=TRUE)
+ funcScanone <- function(y,cr,phi,addcovar=NULL,method="hk",crit="qf",
+                         weightPhi=NULL,shrink=TRUE)
   {
     if(method=="hk")
-      out <- funcScanone.hk(y,cr,phi,crit=crit,weightPhi=weightPhi,
+      out <- funcScanone.hk(y,cr,phi,addcovar=addcovar,
+                            crit=crit,weightPhi=weightPhi,
                             shrink=shrink)
     else
       if(method=="imp")
-        out <- funcScanone.imp(y,cr,phi,crit=crit,weightPhi=weightPhi)
+        out <- funcScanone.imp(y,cr,phi,addcovar=addcovar,
+                               crit=crit,weightPhi=weightPhi)
       else
         error("Unknown method.")
     out
   }
 
- funcScanone.hk <- function(y,cr,phi,crit="qf",weightPhi=NULL,
+ funcScanone.hk <- function(y,cr,phi,addcovar=NULL,crit="qf",weightPhi=NULL,
                             shrink=TRUE)
    {
      if(!match("prob",names(cr$geno[[1]])))
@@ -257,7 +259,7 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
          cr <- calc.genoprob(cr)
        }
      # get the array ready
-     out <- scanone(cr,pheno.col=y[,1])
+     out <- scanone(cr,pheno.col=y[,1],method="hk")
      npseudo <- 0
      nr <- nrow(out)
      gg <- array(dim=c(nrow(y),nr,dim(cr$geno[[1]]$prob)[3]))
@@ -277,7 +279,8 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
        {
          for( j in 1:nr )
            {
-             qq <- quadForm(y,gg[,j,-1],phi,weightPhi=weightPhi,
+             z <- cbind(addcovar,gg[,j,-1])
+             qq <- quadForm(y,z,phi,weightPhi=weightPhi,
                             shrink=shrink)
              out[j,3] <- qq$quadform/2/log(10)
            }
@@ -285,10 +288,12 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
 
      if( crit=="ss" )
        {
-         ss0 <- devSS(y,NULL,phi,weightPhi=weightPhi)
+         z <- addcovar
+         ss0 <- devSS(y,addcovar,phi,weightPhi=weightPhi)
          for( j in 1:nr )
            {
-            ss  <- devSS(y,gg[,j,-1],phi,weightPhi=weightPhi)
+             z <- cbind(addcovar,gg[,j,-1])
+            ss  <- devSS(y,z,phi,weightPhi=weightPhi)
             out[j,3] <- -log(ss/ss0)
            }
        }
