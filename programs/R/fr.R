@@ -327,7 +327,7 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
    }
 
 
-funcScanonePerm <- function(y,cr,phi,nperm,method="hk",crit="qf",
+funcScanonePerm <- function(y,cr,phi,nperm,addcovar=NULL,method="hk",crit="qf",
                             weightPhi=NULL,shrink=TRUE)
   {
     # if genotype probabilities have not been calculated, calculate them
@@ -364,7 +364,7 @@ funcScanonePerm <- function(y,cr,phi,nperm,method="hk",crit="qf",
 
      if( crit=="ss" )
        {
-         ss0 <- devSS(y,NULL,phi,weightPhi=weightPhi)
+         ss0 <- devSS(y,addcovar,phi,weightPhi=weightPhi)
        }
      
      # perform permutations
@@ -387,7 +387,8 @@ funcScanonePerm <- function(y,cr,phi,nperm,method="hk",crit="qf",
            {
              for( j in 1:nr )
                {
-                 ss  <- devSS(y[permidx,],gg[,j,-1],phi,weightPhi=weightPhi)
+                 z <- cbind(addcovar,gg[,j,-1])
+                 ss  <- devSS(y[permidx,],z,phi,weightPhi=weightPhi)
                  out[j,2+k] <- -log(ss/ss0)
                }
            }
