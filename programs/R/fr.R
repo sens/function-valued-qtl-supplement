@@ -400,6 +400,27 @@ funcScanonePerm <- function(y,cr,phi,nperm,addcovar=NULL,method="hk",crit="qf",
      out
   }
 
+funcScanonePermCluster <- function(y,cr,phi,nperm,addcovar=NULL,
+                                   method="hk",crit="qf",weightPhi=NULL,
+                                   shrink=TRUE,n.perm,n.cluster)
+  {
+    cl <- makeCluster(n.cluster)
+    clusterStopped <- FALSE
+    on.exit(if (!clusterStopped) stopCluster(cl))
+    clusterSetupRNG(cl)
+    clusterEvalQ(cl, require(qtl, quietly = TRUE))
+    n.perm <- ceiling(n.perm/n.cluster)
+    # if (missing(chr))
+    #  chr <- names(cross$geno)
+    operm <- clusterCall(cl, funcScanonePerm,y,cr,phi,nperm,addcovar,
+                         method,crit,weightPhi,shrink,n.perm)
+    stopCluster(cl)
+    clusterStopped <- TRUE
+    for (j in 2:length(operm)) operm[[1]] <- c(operm[[1]],
+                                               operm[[j]])
+    return(operm[[1]])
+   
+  }
 
 ###########################################################
 # routine for cross validated integrated sequared error
