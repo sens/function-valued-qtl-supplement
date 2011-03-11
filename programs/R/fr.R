@@ -387,7 +387,14 @@ funcScanonePerm <- function(y,cr,phi,nperm,addcovar=NULL,method="hk",crit="qf",
            {
              for( j in 1:nr )
                {
-                 z <- cbind(addcovar,gg[,j,-1])
+                 if(!is.null(addcovar))
+                   {
+                     z <- cbind(addcovar[permidx,],gg[,j,-1])
+                   }
+                 else
+                   {
+                     z <- gg[,j,-1]
+                   }
                  ss  <- devSS(y[permidx,],z,phi,weightPhi=weightPhi)
                  out[j,2+k] <- -log(ss/ss0)
                }
@@ -402,18 +409,19 @@ funcScanonePerm <- function(y,cr,phi,nperm,addcovar=NULL,method="hk",crit="qf",
 
 funcScanonePermCluster <- function(y,cr,phi,nperm,addcovar=NULL,
                                    method="hk",crit="qf",weightPhi=NULL,
-                                   shrink=TRUE,nperm,ncluster)
+                                   shrink=TRUE,ncluster)
   {
     cl <- makeCluster(ncluster)
     clusterStopped <- FALSE
     on.exit(if (!clusterStopped) stopCluster(cl))
     clusterSetupRNG(cl)
     clusterEvalQ(cl, require(qtl, quietly = TRUE))
+    clusterEvalQ(cl, source("~/HG/functionalQTL/programs/R/fr.R"))
     nperm <- ceiling(nperm/ncluster)
     # if (missing(chr))
     #  chr <- names(cross$geno)
     operm <- clusterCall(cl, funcScanonePerm,y,cr,phi,nperm,addcovar,
-                         method,crit,weightPhi,shrink,nperm)
+                         method,crit,weightPhi,shrink)
     stopCluster(cl)
     clusterStopped <- TRUE
     for (j in 2:length(operm)) operm[[1]] <- c(operm[[1]],
