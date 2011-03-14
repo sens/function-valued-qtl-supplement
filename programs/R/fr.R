@@ -191,6 +191,66 @@ yHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
     yhat
   }
 
+
+
+ySmoothPhi <- function(y,phi,addPhiIntercept=TRUE,weightPhi=NULL)
+  {
+    ty <- t(y)
+    if(is.null(weightPhi))
+      weightPhi <- rep(1,ncol(y))
+    
+    if(is.null(phi))
+      {
+        phi <- matrix(rep(1,length=ncol(y)),ncol=1)
+        # out1 <- lm(ty~phi,weights=weightPhi)
+        tyhat <- lm.wfit(x=phi,y=ty,w=weightPhi)$fitted.values
+      }
+    else
+      {
+        if(addPhiIntercept)
+          # out1 <- lm(ty~phi,weights=weightPhi)
+          tyhat <- lm.wfit(x=cbind(rep(1,length=ncol(y)),phi),
+                           y=ty,w=weightPhi)$fitted.values
+        else
+          # out1 <- lm(ty~phi-1,weights=weightPhi)
+          tyhat <- lm.wfit(x=phi,y=ty,w=weightPhi)$fitted.values
+      }
+    t(tyhat)
+  }
+
+
+yHatSmoothPhi <- function(y,z,addZIntercept=TRUE)
+  {
+    if(is.null(z))
+      {
+        z <- matrix(rep(1,length=nrow(y)),ncol=1)
+        # out2 <- lm(t(tyhat)~z)
+        yhat <- lm.fit(x=z,y=y)$fitted.values
+      }
+    else
+      {
+        if(addZIntercept)
+          # out2 <- lm(t(tyhat)~z)
+          yhat <- lm.fit(x=cbind(1,nrow(y),z),y=y)$fitted.values
+        else
+          # out2 <- lm(t(tyhat)~z-1)
+          yhat <- lm.fit(x=z,y=y)$fitted.values
+        }
+    # yhat <- fitted(out2)
+    yhat
+  }
+
+
+devSSSmoothPhi <- function(y,z,addZIntercept=TRUE,weightPhi=NULL)
+{
+  yh <- yHatSmoothPhi(y,z,addZIntercept=TRUE)
+  if(!is.null(weightPhi))
+    sum((y-yh)^2%*%diag(weightPhi))
+  else
+    sum((y-yh)^2)
+}
+
+
 devSS <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
                   weightPhi=NULL)
 {
@@ -299,11 +359,13 @@ funcFit <- function(y,z,phi,type="ss",calcNull=FALSE,addPhiIntercept=TRUE,
      if( crit=="ss" )
        {
          z <- addcovar
-         ss0 <- devSS(y,addcovar,phi,weightPhi=weightPhi)
+         ySmooth <- ySmoothPhi(y,phi,weightPhi=weightPhi)
+         ss0 <- devSSSmoothPhi(ySmooth,addcovar,weightPhi=weightPhi)
+         # ss0 <- devSS(y,addcovar,phi,weightPhi=weightPhi)
          for( j in 1:nr )
            {
              z <- cbind(addcovar,gg[,j,-1])
-            ss  <- devSS(y,z,phi,weightPhi=weightPhi)
+            ss  <- devSSSmoothPhi(ySmooth,z,weightPhi=weightPhi)
             out[j,3] <- -log(ss/ss0)
            }
        }
