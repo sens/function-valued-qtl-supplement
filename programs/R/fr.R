@@ -151,33 +151,43 @@ yHat <- function(y,z,phi,addPhiIntercept=TRUE,addZIntercept=TRUE,
                  weightPhi=NULL)
   {
     ty <- t(y)
+    if(is.null(weightPhi))
+      weightPhi <- rep(1,ncol(y))
+    
     if(is.null(phi))
       {
-        phi <- rep(1,length=ncol(y))
-        out1 <- lm(ty~phi,weights=weightPhi)
+        phi <- matrix(rep(1,length=ncol(y)),ncol=1)
+        # out1 <- lm(ty~phi,weights=weightPhi)
+        tyhat <- lm.wfit(x=phi,y=ty,w=weightPhi)$fitted.values
       }
     else
       {
         if(addPhiIntercept)
-          out1 <- lm(ty~phi,weights=weightPhi)
+          # out1 <- lm(ty~phi,weights=weightPhi)
+          tyhat <- lm.wfit(x=cbind(rep(1,length=ncol(y)),phi),
+                           y=ty,w=weightPhi)$fitted.values
         else
-          out1 <- lm(ty~phi-1,weights=weightPhi)
+          # out1 <- lm(ty~phi-1,weights=weightPhi)
+          tyhat <- lm.wfit(x=phi,y=ty,w=weightPhi)$fitted.values
       }
-    tyhat <- fitted(out1)
+    # tyhat <- fitted(out1)
       
     if(is.null(z))
       {
-        z <- rep(1,length=nrow(y))
-        out2 <- lm(t(tyhat)~z)
+        z <- matrix(rep(1,length=nrow(y)),ncol=1)
+        # out2 <- lm(t(tyhat)~z)
+        yhat <- lm.fit(x=z,y=t(tyhat))$fitted.values
       }
     else
       {
         if(addZIntercept)
-          out2 <- lm(t(tyhat)~z)
+          # out2 <- lm(t(tyhat)~z)
+          yhat <- lm.fit(x=cbind(1,nrow(y),z),y=t(tyhat))$fitted.values
         else
-          out2 <- lm(t(tyhat)~z-1)
+          # out2 <- lm(t(tyhat)~z-1)
+          yhat <- lm.fit(x=z,y=t(tyhat))$fitted.values
         }
-    yhat <- fitted(out2)
+    # yhat <- fitted(out2)
     yhat
   }
 
