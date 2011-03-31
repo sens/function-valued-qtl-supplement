@@ -1,6 +1,6 @@
 .PHONY: clean purge programfiles all
 # group files by type
-Rfiles = R/fr.R R/logistic.R 
+Rfiles = R/fr.R R/logistic.R R/comparison_Yap.R
 pyfiles :=  $(wildcard py/*.py) $(wildcard py/*.pyx) py/Makefile py/README.txt
 datafiles = data/N1_GenoTypes.csv data/N1_CTvsProb_BW6min.csv
 
