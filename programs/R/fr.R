@@ -502,6 +502,129 @@ funcScanonePermCluster <- function(y,cr,phi,nperm,addcovar=NULL,
    
   }
 
+###################################################################
+# pairscan routines
+###################################################################
+
+ funcScantwo <- function(y,cr,phi,addcovar=NULL,method="hk",crit="qf",
+                         weightPhi=NULL,shrink=TRUE)
+  {
+    if(method=="hk")
+      out <- funcScantwo.hk(y,cr,phi,addcovar=addcovar,
+                            crit=crit,weightPhi=weightPhi,
+                            shrink=shrink)
+    else
+      if(method=="imp")
+        out <- funcScantwo.imp(y,cr,phi,addcovar=addcovar,
+                               crit=crit,weightPhi=weightPhi)
+      else
+        error("Unknown method.")
+    out
+  }
+
+ funcScantwo.hk <- function(y,cr,phi,addcovar=NULL,crit="qf",weightPhi=NULL,
+                            shrink=TRUE)
+   {
+     if(!match("prob",names(cr$geno[[1]])))
+       {
+         warning("First running calc.genoprob.")
+         cr <- calc.genoprob(cr)
+       }
+     # get the array ready
+     out1 <- scanone(cr,pheno.col=y[,1],method="hk")
+     npseudo <- nrow(out1)
+     # make array of genotype probabilities
+     gg <- array(dim=c(nrow(y),npseudo,dim(cr$geno[[1]]$prob)[3]))
+
+     out <- matrix(nrow=npseudo,ncol=npseudo)
+     
+     # make genotype probability matrix
+     npseudoCount <- 0
+     for( i in 1:length(cr$geno) )
+       {
+         # all the genotype probabilities on the i-th chromosome
+         ggChr <- cr$geno[[i]]$prob
+         npseudoChr <- dim(ggChr)[2]
+         # print(dim(ggChr))
+         # print(c(npseudo,npseudoChr))
+         gg[,(npseudoCount+1):(npseudoCount+npseudoChr),] <- ggChr
+         npseudoCount <- npseudoCount+npseudoChr
+       }
+
+     if( crit=="qf" )
+       {
+         for( i in 1:(npseudo-1) )
+           {
+             # first marker with additive covariates
+             z1 <- gg[,i,-1]
+             zMain <- cbind(addcovar,z1)
+             qqMain <- quadForm(y,zMain,phi,weightPhi=weightPhi,
+                                shrink=shrink)
+             out[i,i] <- qqMain$quadform/2/log(10)
+             for( j in (i+1):npseudo)
+               {
+                 # second marker sans covariate
+                 z2 <- gg[,j,-1]
+                 zAdd <- cbind(addcovar,z1,z2)
+                 qqAdd <- quadForm(y,zAdd,phi,weightPhi=weightPhi,
+                                shrink=shrink)
+                 out[i,j] <- qqAdd$quadform/2/log(10)
+                 zFull <- cbind(zAdd,kronecker(z1,z2))
+                 qqFull <- quadForm(y,zFull,phi,weightPhi=weightPhi,
+                                shrink=shrink)
+                 out[j,i] <- qqFull$quadform/2/log(10)
+               }
+           }
+       }
+
+     if( crit=="ss" )
+       {
+         # get the smoothed trajectory
+         ySmooth <- ySmoothPhi(y,phi,weightPhi=weightPhi)
+         # baseline sum of squares
+         ss0 <- devSSSmoothPhi(ySmooth,addcovar,weightPhi=weightPhi)
+
+         print(dim(gg))
+         for( i in 1:(npseudo-1) )
+           {
+             print(i)
+             # first marker with additive covariates
+             z1 <- as.matrix(gg[,i,-1])
+             zMain <- cbind(addcovar,z1)
+             ssMain  <- devSSSmoothPhi(ySmooth,zMain,weightPhi=weightPhi)
+             out[i,i] <- -log(ssMain/ss0)
+
+             # loop over pairs
+             for( j in (i+1):(npseudo))
+               {
+                 # second marker sans covariate
+                 z2 <- as.matrix(gg[,j,-1])
+                 zAdd <- cbind(addcovar,z1,z2)
+                 ssAdd <- devSSSmoothPhi(ySmooth,zAdd,weightPhi=weightPhi)
+                 out[i,j] <- -log(ssAdd/ss0)
+                 zFull <- cbind(zAdd,model.matrix(~z1:z2-1))
+                 ssFull <- devSSSmoothPhi(ySmooth,zFull,weightPhi=weightPhi)
+                 out[j,i] <- -log(ssFull/ss0)
+               }
+           }
+       }
+#         z <- addcovar
+#         ySmooth <- ySmoothPhi(y,phi,weightPhi=weightPhi)
+#         ss0 <- devSSSmoothPhi(ySmooth,addcovar,weightPhi=weightPhi)
+#         # ss0 <- devSS(y,addcovar,phi,weightPhi=weightPhi)
+#         for( j in 1:nr )
+#           {
+#             z <- cbind(addcovar,gg[,j,-1])
+#            ss  <- devSSSmoothPhi(ySmooth,z,weightPhi=weightPhi)
+#            out[j,3] <- -log(ss/ss0)
+#           }
+
+     map <- data.frame(chr=out1[,1],pos=out1[,2],eq.spacing=1,xchr=FALSE)
+     val <- list(lod=out,map=map,scanoneX=NULL)
+     class(val) <- "scantwo"
+     val
+   }
+
 ###########################################################
 # routine for cross validated integrated sequared error
 ###########################################################
