@@ -26,7 +26,7 @@ warpFun1 <- function(y0,x,x0,ends=c(0,1))
 
 amplFun <- function(x,x0,y0)
   {
-    predict(interpSpline(x0,y0),x)
+    predict(interpSpline(x0,y0),x)$y
   }
 
 
@@ -49,34 +49,31 @@ devWarp0 <- function(y)
     sum((y-y0)^2)
   }
 
-# v denotes the vertical warping function
+# function for vertical warping
+# y = data matrix
+# x = time co-ordinates
+# z = covariates
+# v1 = y values corresponding to knots v0
+# beta0 = base function
 
 devWarp1 <- function(v1,y,z,x,v0,beta0)
   {
-    # ss0 <- devWarp0(y)
-
     n <- nrow(y)
     
-    if(is.null(v0))
-      {
-        v0 <- rep(0,length(v1))
-      }
-
-    ampl <- matrix(amplFun(x,v0,v1)$y,nrow=1)
-    # ampl <- amplFun(x,v0,v1)$y
+    ampl <- amplFun(x,v0,v1[-1])
     
     # z <- matrix(z,ncol=1)
     
     y0 <- predict(beta0,x=x)$y
-    y0 <- matrix(rep(y0,n),byrow=T,nrow=n)
+    y0 <- outer(rep(v1[1],n),y0)
     
-    y1 <- outer(ampl,z)
+    y1 <- outer(z,ampl)
+    
     # print(dim(y1))
     
     yhat <- y0+y1
     ss1 <- sum((y-yhat)^2)
 
-    #list(ss0,ss1)
     ss1
   }
 
@@ -114,6 +111,44 @@ devWarp2 <- function(w1,y,z,x,w0,ends=c(0,1),beta0)
     #list(ss0,ss1)
     ss1
   }
+
+###########################################################################
+
+# horizontal and vertical warping
+# y = data matrix
+# z = covariate
+# x = time points
+# w0 = time interior warp knots
+# w1 =
+# beta0 = base function
+
+devWarp3 <- function(w1,y,z,x,w0,ends=c(0,1),beta0)
+  {
+    # number of rows in data matrix
+    n <- nrow(y)
+
+    # warp deviations at knots
+    ww1 <- outer(w1,z)
+    # warp base
+    ww0 <- outer(w0,rep(1,n))
+
+    # warped times at knots
+    ww2 <- ww1+ww0
+    
+    # all warped times
+    warp <- apply(ww2,2,warpFun1,x=x,x0=w0,ends=ends)
+    
+    # predict values at warped times
+    yhat <- predict(beta0,x=c(warp))$y
+    yhat <- matrix(yhat,nrow=n,byrow=T)
+    
+    # yhat <- y0+y1
+    ss1 <- sum((y-yhat)^2)
+
+    #list(ss0,ss1)
+    ss1
+  }
+
 
 
 # date()
